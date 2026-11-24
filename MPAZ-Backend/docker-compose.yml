@@ -1,0 +1,68 @@
+# 1) En cada servicio:  ./mvnw clean package -DskipTests
+# 2) Con MySQL encendido en tu PC (puerto 3306, usuario root):  docker compose up -d --build
+# Solo el gateway (9090) queda expuesto. Los demás servicios solo se ven entre sí.
+
+x-common-env: &common-env
+  SECRET: "mpaz-pro-2026-clave-secreta-jwt-xyz"
+
+x-db-env: &db-env
+  DB_USER: "root"
+  DB_PASS: ""
+
+x-host: &host
+  extra_hosts:
+    - "host.docker.internal:host-gateway"
+
+services:
+
+  api-gateway:
+    build: ./api-gateway
+    ports:
+      - "9090:9090"
+    environment:
+      <<: *common-env
+      AUTH_URL: http://auth-service:9094
+      UNIDAD_URL: http://unidad-service:9091
+      ASIGNACION_URL: http://asignacion-service:9092
+      EVALUACION_URL: http://evaluacion-service:9093
+    depends_on:
+      - auth-service
+      - unidad-service
+      - asignacion-service
+      - evaluacion-service
+
+  auth-service:
+    build: ./auth-service
+    <<: *host
+    environment:
+      <<: [*common-env, *db-env]
+      DB_URL: jdbc:mysql://host.docker.internal:3306/bd_auth?createDatabaseIfNotExist=true
+
+  unidad-service:
+    build: ./unidad-service
+    <<: *host
+    environment:
+      <<: *db-env
+      DB_URL: jdbc:mysql://host.docker.internal:3306/bd_unidad?createDatabaseIfNotExist=true
+
+  asignacion-service:
+    build: ./asignacion-service
+    <<: *host
+    environment:
+      <<: *db-env
+      DB_URL: jdbc:mysql://host.docker.internal:3306/bd_asignacion?createDatabaseIfNotExist=true
+      UNIDAD_URL: http://unidad-service:9091
+    depends_on:
+      - unidad-service
+
+  evaluacion-service:
+    build: ./evaluacion-service
+    <<: *host
+    environment:
+      <<: *db-env
+      DB_URL: jdbc:mysql://host.docker.internal:3306/bd_evaluacion?createDatabaseIfNotExist=true
+      UNIDAD_URL: http://unidad-service:9091
+      ASIGNACION_URL: http://asignacion-service:9092
+    depends_on:
+      - unidad-service
+      - asignacion-service
