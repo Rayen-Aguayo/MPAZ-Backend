@@ -1,0 +1,72 @@
+databaseChangeLog:
+  - changeSet:
+      id: 001-create-evaluation-tables
+      author: mpaz
+      changes:
+        - createTable:
+            tableName: evaluaciones
+            columns:
+              - column: { name: id, type: BIGINT, autoIncrement: true, constraints: { primaryKey: true, nullable: false, primaryKeyName: pk_evaluaciones } }
+              - column: { name: unidad_id, type: BIGINT, constraints: { nullable: false } }
+              - column: { name: asignacion_id, type: BIGINT, constraints: { nullable: false, unique: true, uniqueConstraintName: uk_eval_asignacion } }
+              - column: { name: titulo, type: VARCHAR(160), constraints: { nullable: false } }
+              - column: { name: porcentaje_exigencia, type: DECIMAL(5,2), defaultValueNumeric: 60.00, constraints: { nullable: false } }
+              - column: { name: puntaje_maximo, type: INT, constraints: { nullable: false } }
+              - column: { name: estado, type: VARCHAR(20), defaultValue: ACTIVA, constraints: { nullable: false } }
+              - column: { name: creada_en, type: TIMESTAMP WITH TIME ZONE, defaultValueComputed: CURRENT_TIMESTAMP, constraints: { nullable: false } }
+        - createIndex:
+            tableName: evaluaciones
+            indexName: idx_eval_asignacion
+            columns:
+              - column: { name: asignacion_id }
+        - createTable:
+            tableName: intentos_evaluacion
+            columns:
+              - column: { name: id, type: BIGINT, autoIncrement: true, constraints: { primaryKey: true, nullable: false, primaryKeyName: pk_intentos_evaluacion } }
+              - column: { name: evaluacion_id, type: BIGINT, constraints: { nullable: false, foreignKeyName: fk_intento_evaluacion, references: evaluaciones(id) } }
+              - column: { name: estudiante_id, type: BIGINT, constraints: { nullable: false } }
+              - column: { name: numero_intento, type: INT, constraints: { nullable: false } }
+              - column: { name: estado, type: VARCHAR(20), defaultValue: EN_CURSO, constraints: { nullable: false } }
+              - column: { name: aciertos, type: INT, defaultValueNumeric: 0, constraints: { nullable: false } }
+              - column: { name: total_preguntas, type: INT, constraints: { nullable: false } }
+              - column: { name: puntaje_obtenido, type: INT, defaultValueNumeric: 0, constraints: { nullable: false } }
+              - column: { name: nota, type: DECIMAL(2,1) }
+              - column: { name: fecha_inicio, type: TIMESTAMP WITH TIME ZONE, defaultValueComputed: CURRENT_TIMESTAMP, constraints: { nullable: false } }
+              - column: { name: fecha_termino, type: TIMESTAMP WITH TIME ZONE }
+        - addUniqueConstraint:
+            tableName: intentos_evaluacion
+            columnNames: evaluacion_id, estudiante_id, numero_intento
+            constraintName: uk_intento_numero
+        - createIndex:
+            tableName: intentos_evaluacion
+            indexName: idx_intento_eval_est
+            columns:
+              - column: { name: evaluacion_id }
+              - column: { name: estudiante_id }
+        - createTable:
+            tableName: respuestas_evaluacion
+            columns:
+              - column: { name: id, type: BIGINT, autoIncrement: true, constraints: { primaryKey: true, nullable: false, primaryKeyName: pk_respuestas_evaluacion } }
+              - column: { name: intento_id, type: BIGINT, constraints: { nullable: false, foreignKeyName: fk_respuesta_intento, references: intentos_evaluacion(id), deleteCascade: true } }
+              - column: { name: pregunta_id, type: BIGINT, constraints: { nullable: false } }
+              - column: { name: elegida, type: INT, constraints: { nullable: false } }
+              - column: { name: correcta, type: BOOLEAN, constraints: { nullable: false } }
+        - addUniqueConstraint:
+            tableName: respuestas_evaluacion
+            columnNames: intento_id, pregunta_id
+            constraintName: uk_respuesta_intento_pregunta
+        - createTable:
+            tableName: observaciones_pedagogicas
+            columns:
+              - column: { name: id, type: BIGINT, autoIncrement: true, constraints: { primaryKey: true, nullable: false, primaryKeyName: pk_observaciones_pedagogicas } }
+              - column: { name: estudiante_id, type: BIGINT, constraints: { nullable: false } }
+              - column: { name: unidad_id, type: BIGINT, constraints: { nullable: false } }
+              - column: { name: docente_id, type: BIGINT, constraints: { nullable: false } }
+              - column: { name: texto, type: VARCHAR(2000), constraints: { nullable: false } }
+              - column: { name: fecha, type: TIMESTAMP WITH TIME ZONE, defaultValueComputed: CURRENT_TIMESTAMP, constraints: { nullable: false } }
+        - createIndex:
+            tableName: observaciones_pedagogicas
+            indexName: idx_obs_est_unidad
+            columns:
+              - column: { name: estudiante_id }
+              - column: { name: unidad_id }

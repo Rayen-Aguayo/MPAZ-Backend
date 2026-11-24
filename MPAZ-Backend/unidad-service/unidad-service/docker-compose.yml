@@ -1,0 +1,48 @@
+services:
+  postgres-unidad:
+    image: postgres:16-alpine
+    container_name: postgres-unidad
+    environment:
+      POSTGRES_DB: unidaddb
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_unidad_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d unidaddb"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - mpaz-network
+
+  unidad-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: unidad-service
+    ports:
+      - "8082:8082"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-unidad:5432/unidaddb
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+      USUARIO_SERVICE_URL: http://host.docker.internal:8081
+      USUARIO_SERVICE_ENABLED: "false"
+      ASIGNACION_SERVICE_URL: http://host.docker.internal:8083
+      ASIGNACION_SERVICE_ENABLED: "false"
+    depends_on:
+      postgres-unidad:
+        condition: service_healthy
+    networks:
+      - mpaz-network
+
+volumes:
+  postgres_unidad_data:
+
+networks:
+  mpaz-network:
+    driver: bridge
