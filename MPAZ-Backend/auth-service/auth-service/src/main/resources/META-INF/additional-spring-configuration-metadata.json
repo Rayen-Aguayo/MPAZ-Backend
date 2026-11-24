@@ -1,0 +1,14 @@
+{
+  "properties": [
+    {
+      "name": "jwt.secret",
+      "type": "java.lang.String",
+      "description": "Clave secreta del JWT. Debe ser igual en auth-service y api-gateway (32 a 47 caracteres)."
+    },
+    {
+      "name": "jwt.expiration-minutes",
+      "type": "java.lang.Long",
+      "description": "Minutos de vigencia del token."
+    }
+  ]
+}
