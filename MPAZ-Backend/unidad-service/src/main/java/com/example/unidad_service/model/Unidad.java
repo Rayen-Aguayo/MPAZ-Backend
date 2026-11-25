@@ -17,6 +17,7 @@ public class Unidad {
     private String asignatura;
     private String titulo;
     /** Ej.: "OA 3" */
+    @Column(name = "codigo_oa")
     private String codigoOA;
     @Column(columnDefinition = "TEXT")
     private String objetivo;

@@ -19,6 +19,7 @@ public class IntentoPrueba {
     private Long estudianteId;
     private Long unidadId;
     private String curso;
+    @Column(name = "codigo_oa")
     private String codigoOA;
     @Column(columnDefinition = "TEXT")
     private String objetivo;
