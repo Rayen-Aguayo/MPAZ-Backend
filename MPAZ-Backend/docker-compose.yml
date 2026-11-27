@@ -1,30 +1,55 @@
-# 1) En cada servicio:  ./mvnw clean package -DskipTests
-# 2) Con MySQL encendido en tu PC (puerto 3306, usuario root):  docker compose up -d --build
-# Solo el gateway (9090) queda expuesto. Los demás servicios solo se ven entre sí.
+
+name: mpaz
 
 x-common-env: &common-env
-  SECRET: "mpaz-pro-2026-clave-secreta-jwt-xyz"
+  SECRET: ${SECRET:?Configura SECRET en el archivo .env}
 
 x-db-env: &db-env
-  DB_USER: "root"
-  DB_PASS: ""
-
-x-host: &host
-  extra_hosts:
-    - "host.docker.internal:host-gateway"
+  <<: *common-env
+  DB_USER: ${MYSQL_USER:?}
+  DB_PASS: ${MYSQL_PASSWORD:?}
 
 services:
 
+  mysql:
+    image: mysql:8.4
+    restart: unless-stopped
+
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?}
+      MYSQL_USER: ${MYSQL_USER:?}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:?}
+      TZ: America/Santiago
+
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_0900_ai_ci
+
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./mysql:/docker-entrypoint-initdb.d:ro
+
+    healthcheck:
+      test: ["CMD-SHELL", 'mysql --protocol=TCP -h 127.0.0.1 -u "$$MYSQL_USER" -p"$$MYSQL_PASSWORD" -D bd_auth -e "SELECT 1"']
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 20s
+
   api-gateway:
     build: ./api-gateway
+    restart: unless-stopped
+
     ports:
       - "9090:9090"
+
     environment:
       <<: *common-env
       AUTH_URL: http://auth-service:9094
       UNIDAD_URL: http://unidad-service:9091
       ASIGNACION_URL: http://asignacion-service:9092
       EVALUACION_URL: http://evaluacion-service:9093
+
     depends_on:
       - auth-service
       - unidad-service
@@ -33,36 +58,60 @@ services:
 
   auth-service:
     build: ./auth-service
-    <<: *host
+    restart: unless-stopped
+
     environment:
-      <<: [*common-env, *db-env]
-      DB_URL: jdbc:mysql://host.docker.internal:3306/bd_auth?createDatabaseIfNotExist=true
+      <<: *db-env
+      DB_URL: "jdbc:mysql://mysql:3306/bd_auth?allowPublicKeyRetrieval=true&useSSL=false"
+
+    depends_on:
+      mysql:
+        condition: service_healthy
 
   unidad-service:
     build: ./unidad-service
-    <<: *host
+    restart: unless-stopped
+
     environment:
       <<: *db-env
-      DB_URL: jdbc:mysql://host.docker.internal:3306/bd_unidad?createDatabaseIfNotExist=true
+      DB_URL: "jdbc:mysql://mysql:3306/bd_unidad?allowPublicKeyRetrieval=true&useSSL=false"
+
+    depends_on:
+      mysql:
+        condition: service_healthy
 
   asignacion-service:
     build: ./asignacion-service
-    <<: *host
+    restart: unless-stopped
+
     environment:
       <<: *db-env
-      DB_URL: jdbc:mysql://host.docker.internal:3306/bd_asignacion?createDatabaseIfNotExist=true
+      DB_URL: "jdbc:mysql://mysql:3306/bd_asignacion?allowPublicKeyRetrieval=true&useSSL=false"
       UNIDAD_URL: http://unidad-service:9091
+
     depends_on:
-      - unidad-service
+      mysql:
+        condition: service_healthy
+      unidad-service:
+        condition: service_started
 
   evaluacion-service:
     build: ./evaluacion-service
-    <<: *host
+    restart: unless-stopped
+
     environment:
       <<: *db-env
-      DB_URL: jdbc:mysql://host.docker.internal:3306/bd_evaluacion?createDatabaseIfNotExist=true
+      DB_URL: "jdbc:mysql://mysql:3306/bd_evaluacion?allowPublicKeyRetrieval=true&useSSL=false"
       UNIDAD_URL: http://unidad-service:9091
       ASIGNACION_URL: http://asignacion-service:9092
+
     depends_on:
-      - unidad-service
-      - asignacion-service
+      mysql:
+        condition: service_healthy
+      unidad-service:
+        condition: service_started
+      asignacion-service:
+        condition: service_started
+
+volumes:
+  mysql-data:
