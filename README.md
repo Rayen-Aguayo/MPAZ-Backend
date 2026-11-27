@@ -1,15 +1,11 @@
 # MPAZ-Backend
 
-Backend de **MPAZ PRO 2º** con arquitectura de microservicios. Se entra siempre por el `api-gateway`, que valida el token JWT y autoriza por rol (**UTP**, **DOCENTE** y **ESTUDIANTE**).
+Backend de MPAZ PRO 2º con arquitectura de microservicios. Se entra siempre por el api-gateway, que valida el token JWT y autoriza por rol (UTP, DOCENTE y ESTUDIANTE).
 
-Todo corre con **Docker**: los cinco servicios y la base de datos MySQL se levantan con un solo comando. No necesitas instalar Java, Maven, MySQL ni XAMPP.
-=======
-MPAZ-Backend
->>>>>>> 353bedf1950e3b7598a6608556366281f8ad9cb5
+Todo corre con Docker: los cinco servicios y la base de datos MySQL se levantan con un solo comando. No necesitas instalar Java, Maven, MySQL ni XAMPP.
 
 ## Contenido
 
-<<<<<<< HEAD
 1. [Microservicios](#1-microservicios)
 2. [Tecnologías](#2-tecnologías)
 3. [Estructura del proyecto](#3-estructura-del-proyecto)
