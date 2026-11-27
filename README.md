@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # MPAZ-Backend
 
 Backend de **MPAZ PRO 2º** con arquitectura de microservicios. Se entra siempre por el `api-gateway`, que valida el token JWT y autoriza por rol (**UTP**, **DOCENTE** y **ESTUDIANTE**).
